@@ -12,12 +12,15 @@ import org.jetbrains.annotations.NotNull;
 
 public class TouhouPlayer extends ServerPlayer {
     public boolean bossMode=false;
+
     public TouhouPlayer(MinecraftServer server, ServerLevel world, GameProfile profile, ClientInformation clientOptions) {
         super(server, world, profile, clientOptions);
     }
 
+
+
     @Override
     protected @NotNull AABB makeBoundingBox() {
-        return bossMode ? getDimensions(Pose.SWIMMING).makeBoundingBox(this.position().add(0,1,0)) : super.makeBoundingBox();
+        return bossMode ? getDimensions(Pose.SWIMMING).makeBoundingBox(this.position().add(0,1.5,0)) : super.makeBoundingBox();
     }
 }
