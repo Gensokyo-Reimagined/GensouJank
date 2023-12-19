@@ -1,9 +1,5 @@
 package net.gensokyoreimagined.gensoujank;
 
-import com.mojang.authlib.GameProfile;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ClientInformation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.phys.AABB;
@@ -19,57 +15,36 @@ import java.util.*;
 
 public class TouhouPlayer extends ServerPlayer {
 
-    private static final Set<String> commonDescriptorNames = new HashSet<>();
-    private static final HashMap<String, Field> serverPlayerDescriptorMap = new HashMap<>();
-    private static final HashMap<String, Field> touhouPlayerDescriptorMap = new HashMap<>();
+    private static final Set<String> commonFieldNames = new HashSet<>();
+    private static final HashMap<String, Field> serverPlayerFieldMap = new HashMap<>();
+    private static final HashMap<String, Field> touhouPlayerFieldMap = new HashMap<>();
 
     static {
         // Now invoking reflection magic, please watch warmly
 
         // TLDR: get all the property descriptors for ServerPlayer and TouhouPlayer, then get the common ones
-        var serverPlayerFields = getFields(ServerPlayer.class);
-        var touhouPlayerFields = getFields(TouhouPlayer.class);
+        var serverPlayerFields = ReflectionJank.getFields(ServerPlayer.class);
+        var touhouPlayerFields = ReflectionJank.getFields(TouhouPlayer.class);
 
         serverPlayerFields.forEach(field -> {
             if ((field.getModifiers() & (Modifier.STATIC | Modifier.FINAL)) == (Modifier.STATIC | Modifier.FINAL)) return; // skip static final fields (they're constants)
 
-            serverPlayerDescriptorMap.put(field.getName(), field);
+            serverPlayerFieldMap.put(field.getName(), field);
             field.setAccessible(true);
         });
 
         touhouPlayerFields.forEach(field -> {
             if ((field.getModifiers() & (Modifier.STATIC | Modifier.FINAL)) == (Modifier.STATIC | Modifier.FINAL)) return; // skip static final fields (they're constants)
 
-            touhouPlayerDescriptorMap.put(field.getName(), field);
+            touhouPlayerFieldMap.put(field.getName(), field);
             field.setAccessible(true);
         });
 
-        commonDescriptorNames.addAll(serverPlayerDescriptorMap.keySet());
-        commonDescriptorNames.retainAll(touhouPlayerDescriptorMap.keySet());
-
-        // var nameList = commonDescriptorNames.stream().reduce((a, b) -> a + ", " + b).orElse("");
-        // Bukkit.getLogger().info("[GensouJank] Common fields: " + nameList);
-    }
-
-    private static Iterable<Field> getFields(Class<?> startClass) {
-
-        var fields = new ArrayList<>(List.of(startClass.getDeclaredFields()));
-        Class<?> parentClass = startClass.getSuperclass();
-
-        if (parentClass != null && !parentClass.equals(Object.class)) {
-            // lol, recursion
-            var parentFields = getFields(parentClass);
-            parentFields.forEach(fields::add);
-        }
-
-        return fields;
+        commonFieldNames.addAll(serverPlayerFieldMap.keySet());
+        commonFieldNames.retainAll(touhouPlayerFieldMap.keySet());
     }
 
     public boolean bossMode = false;
-
-    // public TouhouPlayer(MinecraftServer server, ServerLevel world, GameProfile profile, ClientInformation clientOptions) {
-    //     super(server, world, profile, clientOptions);
-    // }
 
     public TouhouPlayer(CraftPlayer player) {
         super(
@@ -82,9 +57,9 @@ public class TouhouPlayer extends ServerPlayer {
         // Using the power of reflection and bytecode manipulation, we can do this
 
         // Copy all the common properties from the server player to the Touhou player
-        for (var name : commonDescriptorNames) {
-            var serverPlayerField = serverPlayerDescriptorMap.get(name);
-            var touhouPlayerField = touhouPlayerDescriptorMap.get(name);
+        for (var name : commonFieldNames) {
+            var serverPlayerField = serverPlayerFieldMap.get(name);
+            var touhouPlayerField = touhouPlayerFieldMap.get(name);
 
             if (serverPlayerField != null && touhouPlayerField != null) { // should always be true
                 try {
@@ -117,8 +92,6 @@ public class TouhouPlayer extends ServerPlayer {
                             touhouPlayerField.set(this, serverPlayerField.get(player.getHandle()));
                             break;
                     }
-
-                    Bukkit.getLogger().info("[GensouJank] Copied property " + name + " from ServerPlayer to TouhouPlayer");
                 } catch (Exception e) {
                     Bukkit.getLogger().warning("[GensouJank] Failed to copy property " + name + " from ServerPlayer to TouhouPlayer\n" + e);
                 }

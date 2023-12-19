@@ -25,18 +25,11 @@ public class TouhouFocusListener extends PacketAdapter {
         {
             var action = packet.getPlayerActions().read(0);
 
-            if (action == EnumWrappers.PlayerAction.START_SNEAKING) { // Start sneaking/focusing
-//                Bukkit.getLogger().info("[GensouJank] Player " + player.getName() + " now focusing");
-                event.setCancelled(true);
-            } else if (action == EnumWrappers.PlayerAction.STOP_SNEAKING) { // Stop sneaking/focusing
-//                Bukkit.getLogger().info("[GensouJank] Player " + player.getName() + " unfocusing");
-                // don't need to cancel this, but we can if we want to
-            }
-
             // Because we're using a packet listener, we can't use the TouhouPlayer class
             var bukkitPlayer = (CraftPlayer) Bukkit.getPlayerExact(player.getName());
             if (bukkitPlayer != null && bukkitPlayer.getHandle() instanceof TouhouPlayer touhouPlayer) {
-//                Bukkit.getLogger().info("[GensouJank] Player " + player.getName() + " is a TouhouPlayer, setting boss mode to " + (action == EnumWrappers.PlayerAction.START_SNEAKING));
+                // TODO note: getting on horse or other vehicular items will also trigger this - check?
+                Bukkit.getLogger().info("[GensouJank] Player " + player.getName() + " triggered focus mode: " + (action == EnumWrappers.PlayerAction.START_SNEAKING));
                 touhouPlayer.bossMode = (action == EnumWrappers.PlayerAction.START_SNEAKING);
             }
         } catch (FieldAccessException e)
