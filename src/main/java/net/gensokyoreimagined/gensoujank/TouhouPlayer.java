@@ -1,6 +1,8 @@
 package net.gensokyoreimagined.gensoujank;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.phys.AABB;
 import org.bukkit.Bukkit;
@@ -97,6 +99,11 @@ public class TouhouPlayer extends ServerPlayer {
                 }
             }
         }
+
+        // Some extra finjangling
+        // i had a dream that all we had to do was modify the connection obj to point to our entity instead of making a new one
+        //var cookie = new CommonListenerCookie(player.getProfile(), 0, player.getHandle().clientInformation());
+        // connection = new ServerGamePacketListenerImpl(this.server, player.getHandle().connection.connection, this, cookie);
     }
 
     @Override

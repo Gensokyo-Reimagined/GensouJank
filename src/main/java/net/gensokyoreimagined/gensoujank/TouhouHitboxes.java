@@ -29,6 +29,7 @@ import java.util.*;
 public class TouhouHitboxes implements CommandExecutor, Listener {
     private final GensouJank gensouJank;
 
+    private static final HashMap<String, Field> craftPlayerFields = new HashMap<>();
     private static final HashMap<String, Field> playerListFields = new HashMap<>();
     private static final HashMap<String, Field> entityLookupFields = new HashMap<>();
 
@@ -46,6 +47,11 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
         ReflectionJank.getFields(EntityLookup.class).forEach(field -> {
             field.setAccessible(true);
             entityLookupFields.put(field.getName(), field);
+        });
+
+        ReflectionJank.getFields(CraftPlayer.class).forEach(field -> {
+            field.setAccessible(true);
+            craftPlayerFields.put(field.getName(), field);
         });
     }
 
@@ -118,8 +124,20 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
                 }
             }
 
+            // Update the CraftEntity to use our new TouhouPlayer
+            try {
+                craftPlayerFields.get("entity").set(oldPlayer, player);
+            } catch (IllegalAccessException e) {
+                Bukkit.getLogger().warning("[GensouJank] Player " + event.getPlayer().getName() + " failed to set entity field, this is probably bad\n" + e);
+            }
+
+            // Force the connection to use the new player
+            player.connection.player = player;
+
             playerList.respawn(player, ((CraftWorld) oldPlayer.getWorld()).getHandle().getLevel(), true, oldPlayer.getLocation(), false, PlayerRespawnEvent.RespawnReason.PLUGIN);
-            oldPlayer.getHandle().discard();
+            // oldPlayer.getHandle().chunkLoader = null; // chat, are we screwed?
+            // oldPlayer.saveData();
+            // oldPlayer.getHandle().discard();
 
             Bukkit.getScheduler().runTaskTimer(gensouJank, () -> {
                 var box = player.getBoundingBox();
