@@ -6,9 +6,11 @@ import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.minecraft.server.dedicated.DedicatedPlayerList;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.entity.EntityInLevelCallback;
+import net.minecraft.world.level.entity.EntityTickList;
 import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -29,6 +31,8 @@ import java.util.*;
 public class TouhouHitboxes implements CommandExecutor, Listener {
     private final GensouJank gensouJank;
 
+    private static final HashMap<String, Field> serverLevelFields = new HashMap<>();
+    private static final HashMap<String, Field> entityTickListFields = new HashMap<>();
     private static final HashMap<String, Field> craftPlayerFields = new HashMap<>();
     private static final HashMap<String, Field> playerListFields = new HashMap<>();
     private static final HashMap<String, Field> entityLookupFields = new HashMap<>();
@@ -38,6 +42,16 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
     }
 
     static {
+        ReflectionJank.getFields(ServerLevel.class).forEach(field -> {
+            field.setAccessible(true);
+            serverLevelFields.put(field.getName(), field);
+        });
+
+        ReflectionJank.getFields(EntityTickList.class).forEach(field -> {
+            field.setAccessible(true);
+            entityTickListFields.put(field.getName(), field);
+        });
+
         ReflectionJank.getFields(DedicatedPlayerList.class).forEach(field -> {
             field.setAccessible(true);
             playerListFields.put(field.getName(), field);
@@ -101,6 +115,7 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
             var server = playerList.getServer();
             var level = server.getLevel(player.getRespawnDimension());
 
+
             if (level == null) {
                 Bukkit.getLogger().warning("[GensouJank] Player " + event.getPlayer().getName() + " respawn dimension " + player.getRespawnDimension() + " not found, this is probably bad");
             } else {
@@ -121,6 +136,33 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
                 } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException |
                          IllegalAccessException | InvocationTargetException e) {
                     Bukkit.getLogger().warning("[GensouJank] Player " + event.getPlayer().getName() + " failed to get callback class, this is probably bad\n" + e);
+                }
+
+                // Weirdly, Paper does not have the WorldServer NMS class?
+                Field entityTickListField = null;
+                var fields = ReflectionJank.getFields(level.getClass());
+
+                for (var field : fields) {
+                    if (field.getType().equals(EntityTickList.class)) {
+                        entityTickListField = field;
+                        entityTickListField.setAccessible(true);
+                        break;
+                    }
+                }
+
+                if (entityTickListField == null) {
+                    Bukkit.getLogger().warning("[GensouJank] Player " + event.getPlayer().getName() + " failed to get entity tick list field, this is probably bad");
+                } else {
+                    var entityTickList = ReflectionJank.<EntityTickList>getValue(level, entityTickListField); // oops, not "entityTickList"!
+                    var entityTickSet = ReflectionJank.<io.papermc.paper.util.maplist.IteratorSafeOrderedReferenceSet<Entity>>getValue(entityTickList, entityTickListFields.get("entities"));
+
+                    if (!entityTickSet.remove(oldPlayer.getHandle())) {
+                        Bukkit.getLogger().warning("[GensouJank] Player " + event.getPlayer().getName() + " failed to remove from entity tick list, this is probably bad");
+                    }
+
+                    if (!entityTickSet.add(player)) {
+                        Bukkit.getLogger().warning("[GensouJank] Player " + event.getPlayer().getName() + " failed to add to entity tick list, this is probably bad");
+                    }
                 }
             }
 
