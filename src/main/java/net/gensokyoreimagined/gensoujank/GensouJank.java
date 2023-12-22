@@ -6,7 +6,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class GensouJank extends JavaPlugin implements Listener {
     @Override
     public void onEnable(){
-        TouhouHitboxes touhouHitboxes = new TouhouHitboxes(this);
+        TouhouHitboxes touhouHitboxes = new TouhouHitboxes();
         getCommand("touhouhitbox").setExecutor(touhouHitboxes);
         getServer().getPluginManager().registerEvents(touhouHitboxes,this);
 
