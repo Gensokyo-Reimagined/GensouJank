@@ -22,7 +22,7 @@ tasks {
     }
     shadowJar {
 
-        relocate("net.bytebuddy", "net.gensokyoreimagined.net.dependencies.net.bytebuddy")
+        relocate("net.bytebuddy", "net.gensokyoreimagined.dependencies.net.bytebuddy")
 
         manifest {
             attributes["Agent-Class"] = "net.gensokyoreimagined.gensoujank.ServerAgent"
