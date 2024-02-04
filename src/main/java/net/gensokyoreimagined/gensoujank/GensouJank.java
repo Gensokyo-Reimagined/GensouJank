@@ -1,5 +1,6 @@
 package net.gensokyoreimagined.gensoujank;
 
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -12,12 +13,24 @@ public class GensouJank extends JavaPlugin implements Listener {
         return instance;
     }
 
+    public FileConfiguration config = getConfig();
+
     @Override
     public void onEnable(){
         instance = this;
 
+        config.addDefault("hitbox-y-offset", 1.2);
+        // config.addDefault("debug-mode", false);
+        config.options().copyDefaults(true);
+        saveConfig();
+
+        TouhouPlayer.adjustY = config.getDouble("hitbox-y-offset");
+
         TouhouHitboxes touhouHitboxes = new TouhouHitboxes();
-        Objects.requireNonNull(getCommand("touhouhitbox")).setExecutor(touhouHitboxes);
+        TouhouHitboxesTabCompleter touhouHitboxesTabCompleter = new TouhouHitboxesTabCompleter();
+        var command = Objects.requireNonNull(getCommand("touhouhitbox"));
+        command.setExecutor(touhouHitboxes);
+        command.setTabCompleter(touhouHitboxesTabCompleter);
         getServer().getPluginManager().registerEvents(touhouHitboxes,this);
     }
 }

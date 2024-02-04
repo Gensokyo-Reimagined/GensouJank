@@ -3,8 +3,6 @@ main: net.gensokyoreimagined.gensoujank.GensouJank
 version: 0.1-SNAPSHOT
 load: STARTUP
 api-version: 1.20
-depend:
-  - ProtocolLib
 commands:
   touhouhitbox:
     usage: /<command> <player> <true/false>

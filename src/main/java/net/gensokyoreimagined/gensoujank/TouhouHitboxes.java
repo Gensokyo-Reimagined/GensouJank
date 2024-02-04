@@ -1,20 +1,25 @@
 package net.gensokyoreimagined.gensoujank;
 
+import com.mojang.math.Transformation;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Bukkit;
-import org.bukkit.Color;
-import org.bukkit.Location;
-import org.bukkit.Particle;
+import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_20_R2.entity.CraftPlayer;
+import org.bukkit.command.TabCompleter;
+import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_20_R3.entity.CraftBlockDisplay;
+import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
+
+import java.util.List;
 
 public class TouhouHitboxes implements CommandExecutor, Listener {
     @EventHandler
@@ -34,6 +39,15 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
             if (touhouPlayer.debugTask != null) {
                 touhouPlayer.debugTask.cancel();
                 touhouPlayer.debugTask = null;
+            }
+
+            if (touhouPlayer.hitbox != null) {
+                touhouPlayer.hitbox.remove();
+            }
+
+            if (touhouPlayer.bossMode) {
+                // Log out and fix collision box
+                touhouPlayer.bossMode = false;
             }
         } else {
             Bukkit.getLogger().warning("[GensouJank] Player " + player.getName() + " is not a TouhouPlayer, but " + player.getHandle().getClass());
@@ -73,23 +87,61 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
 
             if (args.length > 2) {
                 if (args[2].equalsIgnoreCase("true") && touhouPlayer.debugTask == null) {
+                    // Debug mode: show hitbox using a block display entity (glass block)
+
+                    var world = player.getWorld();
+                    var box = player.getBoundingBox();
+                    var hitboxLocation = new Location(world, box.getMinX(), box.getMinY(), box.getMinZ());
+                    touhouPlayer.hitbox = (CraftBlockDisplay) world.spawnEntity(hitboxLocation, EntityType.BLOCK_DISPLAY);
+
+                    touhouPlayer.hitbox.setVisibleByDefault(false);
+                    touhouPlayer.hitbox.setTeleportDuration(1);
+                    player.showEntity(GensouJank.getInstance(), touhouPlayer.hitbox);
+
+                    touhouPlayer.hitbox.setBlock(Material.GLASS.createBlockData());
+
+                    // I do not particularly like Bukkit's API, soooo
+                    touhouPlayer.hitbox.getHandle().setTransformation(new Transformation(
+                            null,
+                            null,
+                            new Vector3f((float) box.getWidthX(), (float) box.getHeight(), (float) box.getWidthZ()),
+                            null
+                    ));
+
                     touhouPlayer.debugTask = Bukkit.getScheduler().runTaskTimer(GensouJank.getInstance(), () -> {
-                        var box = player.getBoundingBox();
-                        var world = player.getWorld();
-                        var center = box.getCenter();
-                        world.spawnParticle(Particle.REDSTONE, new Location(world, center.getX(), center.getY(), center.getZ()), 1, 0, 0, 0, 0, new Particle.DustOptions(Color.RED, 1));
-                        world.spawnParticle(Particle.REDSTONE, new Location(world, box.getMinX(), box.getMinY(), box.getMinZ()), 1, 0, 0, 0, 0, new Particle.DustOptions(Color.BLUE, 1));
-                        world.spawnParticle(Particle.REDSTONE, new Location(world, box.getMaxX(), box.getMaxY(), box.getMaxZ()), 1, 0, 0, 0, 0, new Particle.DustOptions(Color.GREEN, 1));
-                    }, 0L, 10L);
+                        var timerBox = player.getBoundingBox();
+
+                        touhouPlayer.hitbox.getHandle().setTransformation(new Transformation(
+                            null,
+                            null,
+                            new Vector3f((float) timerBox.getWidthX(), (float) timerBox.getHeight(), (float) timerBox.getWidthZ()),
+                            null
+                        ));
+
+                        var onGround = player.isOnGround();
+                        // compensate for player movement - step one tick ahead
+                        var velocityX = touhouPlayer.lastBoundingBox == null ? 0 : timerBox.getMinX() - touhouPlayer.lastBoundingBox.getMinX();
+                        var velocityY = touhouPlayer.lastBoundingBox == null ? 0 : timerBox.getMinY() - touhouPlayer.lastBoundingBox.getMinY();
+                        var velocityZ = touhouPlayer.lastBoundingBox == null ? 0 : timerBox.getMinZ() - touhouPlayer.lastBoundingBox.getMinZ();
+
+                        touhouPlayer.hitbox.teleport(new Location(
+                            touhouPlayer.getBukkitEntity().getWorld(), timerBox.getMinX() + 1 * velocityX, timerBox.getMinY() + (onGround ? 0 : 1 * velocityY), timerBox.getMinZ() + 1 * velocityZ
+                        ));
+
+                        touhouPlayer.lastBoundingBox = timerBox;
+
+                        // Bukkit.getLogger().info("[GensouJank] " + player.getName() + " position: " + player.getLocation());
+                    }, 0L, 1L);
                 } else if (args[2].equalsIgnoreCase("false") && touhouPlayer.debugTask != null) {
                     touhouPlayer.debugTask.cancel();
                     touhouPlayer.debugTask = null;
+                    touhouPlayer.hitbox.remove();
                 }
             }
 
             if (args.length > 3) {
                 try {
-                    touhouPlayer.adjustY = Double.parseDouble(args[3]);
+                    TouhouPlayer.adjustY = Double.parseDouble(args[3]);
                 } catch (NumberFormatException e) {
                     sender.sendMessage(
                         Component
@@ -118,3 +170,4 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
         return true;
     }
 }
+

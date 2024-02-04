@@ -1,5 +1,6 @@
 package net.gensokyoreimagined.gensoujank;
 
+import com.sun.tools.attach.VirtualMachine;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -9,6 +10,7 @@ import net.bytebuddy.jar.asm.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.instrument.*;
+import java.lang.management.ManagementFactory;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -19,8 +21,16 @@ import java.util.jar.JarFile;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 public class ServerAgent {
+    private static boolean isLoaded = false;
+
     public static void premain(String arguments, Instrumentation instrumentation) {
+        if (isLoaded) {
+            return;
+        }
+
         System.out.println(ServerAgent.class.getName() + " loaded");
+        isLoaded = true;
+
         instrumentation.addTransformer(new ClassFileTransformer() {
             @Override
             public byte[] transform(
@@ -77,5 +87,45 @@ public class ServerAgent {
                 })
                 .installOn(instrumentation);
 
+    }
+
+    private String getPid() {
+        var bean = ManagementFactory.getRuntimeMXBean();
+        var pid = bean.getName();
+        if (pid.contains("@")) {
+            pid = pid.substring(0, pid.indexOf("@"));
+        }
+        return pid;
+    }
+
+    public void attachAgent() {
+        try {
+            System.loadLibrary("attach");
+            var vm = VirtualMachine.attach(getPid());
+            var props = vm.getSystemProperties();
+            vm.loadAgent(new File(getClass().getProtectionDomain().getCodeSource().getLocation().toURI().getPath()).getAbsolutePath());
+            vm.detach();
+        } catch (Exception e) {
+            System.out.println("Failed to attach agent");
+            e.printStackTrace();
+        }
+    }
+
+    public static void reTransformAll(Instrumentation instrumentation){
+        for(var clazz : instrumentation.getAllLoadedClasses()){
+
+            if(clazz != null && clazz.getPackage() != null && clazz.getSuperclass() != null){
+                if(!clazz.isPrimitive() && !clazz.getPackage().getName().startsWith("java.lang")){
+                    if(instrumentation.isModifiableClass(clazz)){
+                        try {
+                            instrumentation.retransformClasses(clazz);
+                        } catch (UnmodifiableClassException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+
+        }
     }
 }
