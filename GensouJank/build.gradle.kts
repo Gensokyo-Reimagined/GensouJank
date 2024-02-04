@@ -1,7 +1,5 @@
 plugins {
-    id("java")
-    id("io.papermc.paperweight.userdev") version "1.5.10"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("mod.base-conventions")
 }
 
 group = "net.gensokyoreimagined"
@@ -12,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle("1.20.4-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle(libs.versions.paper)
     implementation("net.bytebuddy:byte-buddy:1.14.11")
 }
 tasks {

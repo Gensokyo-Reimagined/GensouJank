@@ -1,8 +1,17 @@
 pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        maven("https://repo.papermc.io/repository/maven-public/")
-    }
+  includeBuild("build-logic")
+  repositories {
+    gradlePluginPortal()
+    maven("https://repo.papermc.io/repository/maven-public/")
+  }
 }
-rootProject.name = "GensouJank"
 
+plugins {
+  id("org.gradle.toolchains.foojay-resolver-convention") version "0.7.0"
+}
+
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
+rootProject.name = "ignite-mod-template"
+include("GensouJank")
+include("GensouJankMod")
