@@ -88,44 +88,4 @@ public class ServerAgent {
                 .installOn(instrumentation);
 
     }
-
-    private String getPid() {
-        var bean = ManagementFactory.getRuntimeMXBean();
-        var pid = bean.getName();
-        if (pid.contains("@")) {
-            pid = pid.substring(0, pid.indexOf("@"));
-        }
-        return pid;
-    }
-
-    public void attachAgent() {
-        try {
-            System.loadLibrary("attach");
-            var vm = VirtualMachine.attach(getPid());
-            var props = vm.getSystemProperties();
-            vm.loadAgent(new File(getClass().getProtectionDomain().getCodeSource().getLocation().toURI().getPath()).getAbsolutePath());
-            vm.detach();
-        } catch (Exception e) {
-            System.out.println("Failed to attach agent");
-            e.printStackTrace();
-        }
-    }
-
-    public static void reTransformAll(Instrumentation instrumentation){
-        for(var clazz : instrumentation.getAllLoadedClasses()){
-
-            if(clazz != null && clazz.getPackage() != null && clazz.getSuperclass() != null){
-                if(!clazz.isPrimitive() && !clazz.getPackage().getName().startsWith("java.lang")){
-                    if(instrumentation.isModifiableClass(clazz)){
-                        try {
-                            instrumentation.retransformClasses(clazz);
-                        } catch (UnmodifiableClassException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-
-        }
-    }
 }
