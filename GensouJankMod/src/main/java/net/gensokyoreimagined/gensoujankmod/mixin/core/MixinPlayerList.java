@@ -1,7 +1,7 @@
-package net.gensokyoreimagined.gensoujank.mixin.core;
+package net.gensokyoreimagined.gensoujankmod.mixin.core;
 
 import com.mojang.authlib.GameProfile;
-import net.gensokyoreimagined.gensoujank.TouhouPlayer;
+import net.gensokyoreimagined.gensoujankmod.TouhouPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;

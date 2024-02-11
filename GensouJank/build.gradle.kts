@@ -13,6 +13,7 @@ repositories {
 dependencies {
     paperweight.paperDevBundle(libs.versions.paper)
     implementation("net.bytebuddy:byte-buddy:1.14.11")
+    compileOnly(project(":GensouJankMod"))
 }
 
 tasks {
@@ -37,7 +38,7 @@ configurations {
     create("conf")
 }
 
-var jarFile = file("build/libs/%s-%s-dev-all.jar".format(project.name, project.version))
+var jarFile = file("build/libs/%s-%s.jar".format(project.name, project.version))
 var jarArtifact = artifacts.add("conf", jarFile) {
     type = "jar"
     builtBy("jar")

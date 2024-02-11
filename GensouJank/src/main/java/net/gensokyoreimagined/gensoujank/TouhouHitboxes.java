@@ -1,6 +1,8 @@
 package net.gensokyoreimagined.gensoujank;
 
 import com.mojang.math.Transformation;
+import net.gensokyoreimagined.gensoujankmod.TouhouPlayer;
+import net.gensokyoreimagined.gensoujankmod.ITouhouPlayer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.*;
@@ -26,7 +28,7 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
     public void onPlayerLogin(PlayerJoinEvent event) {
         var player = (CraftPlayer) event.getPlayer();
 
-        if (!(player.getHandle() instanceof TouhouPlayer)) {
+        if (!(player.getHandle() instanceof ITouhouPlayer)) {
             Bukkit.getLogger().warning("[GensouJank] Player " + player.getName() + " is not a TouhouPlayer, but " + player.getHandle().getClass());
         }
     }
@@ -35,19 +37,20 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
     public void onPlayerQuit(PlayerQuitEvent event) {
         var player = (CraftPlayer) event.getPlayer();
 
-        if (player.getHandle() instanceof TouhouPlayer touhouPlayer) {
-            if (touhouPlayer.debugTask != null) {
-                touhouPlayer.debugTask.cancel();
-                touhouPlayer.debugTask = null;
+        if (player.getHandle() instanceof ITouhouPlayer touhouPlayer) {
+            if (touhouPlayer.getDebugTask() != null) {
+                touhouPlayer.getDebugTask().cancel();
+                touhouPlayer.setDebugTask(null);
             }
 
-            if (touhouPlayer.hitbox != null) {
-                touhouPlayer.hitbox.remove();
+            if (touhouPlayer.getHitboxDisplay() != null) {
+                touhouPlayer.getHitboxDisplay().remove();
+                touhouPlayer.setHitboxDisplay(null);
             }
 
-            if (touhouPlayer.bossMode) {
+            if (touhouPlayer.isBossMode()) {
                 // Log out and fix collision box
-                touhouPlayer.bossMode = false;
+                touhouPlayer.setBossMode(false);
             }
         } else {
             Bukkit.getLogger().warning("[GensouJank] Player " + player.getName() + " is not a TouhouPlayer, but " + player.getHandle().getClass());
@@ -82,36 +85,38 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
             return true;
         }
 
-        if(player.getHandle() instanceof TouhouPlayer touhouPlayer) {
-            touhouPlayer.bossMode=args[1].equalsIgnoreCase("true");
+        if(player.getHandle() instanceof ITouhouPlayer touhouPlayer) {
+            touhouPlayer.setBossMode(args[1].equalsIgnoreCase("true"));
 
             if (args.length > 2) {
-                if (args[2].equalsIgnoreCase("true") && touhouPlayer.debugTask == null) {
+                if (args[2].equalsIgnoreCase("true") && touhouPlayer.getDebugTask() == null) {
                     // Debug mode: show hitbox using a block display entity (glass block)
 
                     var world = player.getWorld();
                     var box = player.getBoundingBox();
                     var hitboxLocation = new Location(world, box.getMinX(), box.getMinY(), box.getMinZ());
-                    touhouPlayer.hitbox = (CraftBlockDisplay) world.spawnEntity(hitboxLocation, EntityType.BLOCK_DISPLAY);
+                    var hitbox = (CraftBlockDisplay) world.spawnEntity(hitboxLocation, EntityType.BLOCK_DISPLAY);
+                    touhouPlayer.setHitboxDisplay(hitbox);
 
-                    touhouPlayer.hitbox.setVisibleByDefault(false);
-                    touhouPlayer.hitbox.setTeleportDuration(1);
-                    player.showEntity(GensouJank.getInstance(), touhouPlayer.hitbox);
+                    hitbox.setVisibleByDefault(false);
+                    hitbox.setTeleportDuration(1);
+                    player.showEntity(GensouJank.getInstance(), hitbox);
 
-                    touhouPlayer.hitbox.setBlock(Material.GLASS.createBlockData());
+                    hitbox.setBlock(Material.GLASS.createBlockData());
 
                     // I do not particularly like Bukkit's API, soooo
-                    touhouPlayer.hitbox.getHandle().setTransformation(new Transformation(
+                    hitbox.getHandle().setTransformation(new Transformation(
                             null,
                             null,
                             new Vector3f((float) box.getWidthX(), (float) box.getHeight(), (float) box.getWidthZ()),
                             null
                     ));
 
-                    touhouPlayer.debugTask = Bukkit.getScheduler().runTaskTimer(GensouJank.getInstance(), () -> {
+                    var debugTask = Bukkit.getScheduler().runTaskTimer(GensouJank.getInstance(), () -> {
                         var timerBox = player.getBoundingBox();
+                        var tHitBox = touhouPlayer.getHitboxDisplay();
 
-                        touhouPlayer.hitbox.getHandle().setTransformation(new Transformation(
+                        tHitBox.getHandle().setTransformation(new Transformation(
                             null,
                             null,
                             new Vector3f((float) timerBox.getWidthX(), (float) timerBox.getHeight(), (float) timerBox.getWidthZ()),
@@ -120,28 +125,31 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
 
                         var onGround = player.isOnGround();
                         // compensate for player movement - step one tick ahead
-                        var velocityX = touhouPlayer.lastBoundingBox == null ? 0 : timerBox.getMinX() - touhouPlayer.lastBoundingBox.getMinX();
-                        var velocityY = touhouPlayer.lastBoundingBox == null ? 0 : timerBox.getMinY() - touhouPlayer.lastBoundingBox.getMinY();
-                        var velocityZ = touhouPlayer.lastBoundingBox == null ? 0 : timerBox.getMinZ() - touhouPlayer.lastBoundingBox.getMinZ();
+                        var velocityX = touhouPlayer.getLastBoundingBox() == null ? 0 : timerBox.getMinX() - touhouPlayer.getLastBoundingBox().getMinX();
+                        var velocityY = touhouPlayer.getLastBoundingBox() == null ? 0 : timerBox.getMinY() - touhouPlayer.getLastBoundingBox().getMinY();
+                        var velocityZ = touhouPlayer.getLastBoundingBox() == null ? 0 : timerBox.getMinZ() - touhouPlayer.getLastBoundingBox().getMinZ();
 
-                        touhouPlayer.hitbox.teleport(new Location(
+                        touhouPlayer.getHitboxDisplay().teleport(new Location(
                             touhouPlayer.getBukkitEntity().getWorld(), timerBox.getMinX() + 1 * velocityX, timerBox.getMinY() + (onGround ? 0 : 1 * velocityY), timerBox.getMinZ() + 1 * velocityZ
                         ));
 
-                        touhouPlayer.lastBoundingBox = timerBox;
+                        touhouPlayer.setLastBoundingBox(timerBox);
 
                         // Bukkit.getLogger().info("[GensouJank] " + player.getName() + " position: " + player.getLocation());
                     }, 0L, 1L);
-                } else if (args[2].equalsIgnoreCase("false") && touhouPlayer.debugTask != null) {
-                    touhouPlayer.debugTask.cancel();
-                    touhouPlayer.debugTask = null;
-                    touhouPlayer.hitbox.remove();
+
+                    touhouPlayer.setDebugTask(debugTask);
+                } else if (args[2].equalsIgnoreCase("false") && touhouPlayer.getDebugTask() != null) {
+                    touhouPlayer.getDebugTask().cancel();
+                    touhouPlayer.setDebugTask(null);
+                    touhouPlayer.getHitboxDisplay().remove();
+                    touhouPlayer.setHitboxDisplay(null);
                 }
             }
 
             if (args.length > 3) {
                 try {
-                    TouhouPlayer.adjustY = Double.parseDouble(args[3]);
+                    TouhouPlayer.setAdjustY(Double.parseDouble(args[3]));
                 } catch (NumberFormatException e) {
                     sender.sendMessage(
                         Component
@@ -164,7 +172,7 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
                     .build()
             );
         } else {
-            throw new IllegalStateException("Player is " + player.getHandle().getClass()+ " instead of " + TouhouPlayer.class);
+            throw new IllegalStateException("Player is " + player.getHandle().getClass()+ " instead of TouhouPlayer");
         }
 
         return true;

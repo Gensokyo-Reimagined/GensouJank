@@ -1,4 +1,4 @@
-package net.gensokyoreimagined.gensoujank.mixin.plugins;
+package net.gensokyoreimagined.gensoujankmod.mixin.plugins;
 
 import java.util.List;
 import java.util.Set;

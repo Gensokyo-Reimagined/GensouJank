@@ -14,7 +14,7 @@ configurations {
   create("conf")
 }
 
-var jarFile = file("build/libs/%s-%s-dev-all.jar".format(project.name, project.version))
+var jarFile = file("build/libs/%s-%s.jar".format(project.name, project.version))
 var jarArtifact = artifacts.add("conf", jarFile) {
   type = "jar"
   builtBy("jar")

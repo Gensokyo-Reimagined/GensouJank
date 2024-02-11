@@ -1,8 +1,8 @@
 {
   "required": true,
   "minVersion": "0.8.5",
-  "package": "net.gensokyoreimagined.gensoujank.mixin.core",
-  "plugin": "net.gensokyoreimagined.gensoujank.mixin.plugins.CorePlugin",
+  "package": "net.gensokyoreimagined.gensoujankmod.mixin.core",
+  "plugin": "net.gensokyoreimagined.gensoujankmod.mixin.plugins.CorePlugin",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_17",
   "server": [

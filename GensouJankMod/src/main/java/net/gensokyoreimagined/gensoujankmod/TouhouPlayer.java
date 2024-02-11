@@ -1,4 +1,4 @@
-package net.gensokyoreimagined.gensoujank;
+package net.gensokyoreimagined.gensoujankmod;
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.server.MinecraftServer;
@@ -13,24 +13,35 @@ import org.bukkit.util.BoundingBox;
 import org.jetbrains.annotations.NotNull;
 
 
-public class TouhouPlayer extends ServerPlayer {
+public class TouhouPlayer extends ServerPlayer implements ITouhouPlayer {
     /**
      * The Y coordinate of the player's hitbox is adjusted by this amount when boss mode is enabled.
      */
-    public static double adjustY = 1.2;
+    private static double adjustY = 1.2;
+    public static void setAdjustY(double adjustY) { TouhouPlayer.adjustY = adjustY; }
+    public void setAdjustYY(double adjustY) { TouhouPlayer.adjustY = adjustY; }
 
     /**
      * Whether to enable the smaller hitbox.
      */
-    public boolean bossMode = false;
+    private boolean bossMode = false;
+    public boolean isBossMode() { return bossMode; }
+    public void setBossMode(boolean bossMode) { this.bossMode = bossMode; }
 
     /**
      * The task upon debug mode to reveal the hitbox.
      */
-    public BukkitTask debugTask = null;
-    public BoundingBox lastBoundingBox = null;
+    private BukkitTask debugTask = null;
+    public BukkitTask getDebugTask() { return debugTask; }
+    public void setDebugTask(BukkitTask debugTask) { this.debugTask = debugTask; }
 
-    public CraftBlockDisplay hitbox = null;
+    private BoundingBox lastBoundingBox = null;
+    public BoundingBox getLastBoundingBox() { return lastBoundingBox; }
+    public void setLastBoundingBox(BoundingBox lastBoundingBox) { this.lastBoundingBox = lastBoundingBox; }
+
+    private CraftBlockDisplay hitbox = null;
+    public CraftBlockDisplay getHitboxDisplay() { return hitbox; }
+    public void setHitboxDisplay(CraftBlockDisplay hitbox) { this.hitbox = hitbox; }
 
     public TouhouPlayer(MinecraftServer server, ServerLevel world, GameProfile profile, ClientInformation clientOptions) {
         super(server, world, profile, clientOptions);
