@@ -4,6 +4,7 @@ dependencyResolutionManagement {
   repositories {
     gradlePluginPortal()
     maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://mvnrepository.com/artifact/space.vectrix.ignite/ignite-api")
   }
 
   versionCatalogs {

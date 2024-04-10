@@ -28,7 +28,7 @@ public class GensouJank extends JavaPlugin implements Listener {
 
         TouhouPlayer.setAdjustY(config.getDouble("hitbox-y-offset"));
 
-        TouhouHitboxes touhouHitboxes = new TouhouHitboxes();
+        TouhouHitboxes touhouHitboxes = new TouhouHitboxes(this);
         TouhouHitboxesTabCompleter touhouHitboxesTabCompleter = new TouhouHitboxesTabCompleter();
         var command = Objects.requireNonNull(getCommand("touhouhitbox"));
         command.setExecutor(touhouHitboxes);

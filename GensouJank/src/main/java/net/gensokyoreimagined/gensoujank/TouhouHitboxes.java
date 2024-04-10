@@ -1,35 +1,43 @@
 package net.gensokyoreimagined.gensoujank;
 
 import com.mojang.math.Transformation;
-import net.gensokyoreimagined.gensoujankmod.TouhouPlayer;
 import net.gensokyoreimagined.gensoujankmod.ITouhouPlayer;
+import net.gensokyoreimagined.gensoujankmod.TouhouPlayer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
-import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_20_R3.entity.CraftBlockDisplay;
+import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
-import java.util.List;
+import java.util.logging.Logger;
 
 public class TouhouHitboxes implements CommandExecutor, Listener {
+    private final Logger logger;
+
+    public TouhouHitboxes(GensouJank plugin) {
+        logger = plugin.getLogger();
+    }
+
     @EventHandler
     public void onPlayerLogin(PlayerJoinEvent event) {
         var player = (CraftPlayer) event.getPlayer();
 
+        // TODO use the mixin to verify castability
+
         if (!(player.getHandle() instanceof ITouhouPlayer)) {
-            Bukkit.getLogger().warning("[GensouJank] Player " + player.getName() + " is not a TouhouPlayer, but " + player.getHandle().getClass());
+            logger.warning("Player " + player.getName() + " is not a TouhouPlayer, but " + player.getHandle().getClass());
         }
     }
 
@@ -53,7 +61,7 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
                 touhouPlayer.setBossMode(false);
             }
         } else {
-            Bukkit.getLogger().warning("[GensouJank] Player " + player.getName() + " is not a TouhouPlayer, but " + player.getHandle().getClass());
+            logger.warning("Player " + player.getName() + " is not a TouhouPlayer, but " + player.getHandle().getClass());
         }
     }
 

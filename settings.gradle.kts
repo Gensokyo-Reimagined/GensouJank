@@ -3,6 +3,7 @@ pluginManagement {
   repositories {
     gradlePluginPortal()
     maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://mvnrepository.com/artifact/space.vectrix.ignite/ignite-api")
   }
 }
 
@@ -12,6 +13,6 @@ plugins {
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
-rootProject.name = "GensouJank"
+rootProject.name = "GensouJankCore"
 include("GensouJank")
 include("GensouJankMod")
