@@ -12,6 +12,6 @@ plugins {
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
-rootProject.name = "GensouJank"
+rootProject.name = "GensouJankScaffolding"
 include("GensouJank")
 include("GensouJankMod")

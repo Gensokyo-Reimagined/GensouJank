@@ -6,7 +6,7 @@ import java.util.stream.Collectors
 plugins {
   `java-library`
 
-  id("com.github.johnrengelman.shadow")
+  id("io.github.goooler.shadow")
   id("io.papermc.paperweight.userdev")
 }
 
@@ -14,12 +14,13 @@ plugins {
 val libs = extensions.getByType(org.gradle.accessors.dm.LibrariesForLibs::class)
 
 java {
-  javaTarget(17)
+  javaTarget(21)
   withSourcesJar()
 }
 
 repositories {
   mavenCentral()
+  gradlePluginPortal()
   maven("https://oss.sonatype.org/content/groups/public/")
   maven("https://repo.papermc.io/repository/maven-public/")
   maven("https://repo.spongepowered.org/maven/")

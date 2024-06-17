@@ -1,7 +1,7 @@
 package net.gensokyoreimagined.gensoujankmod;
 
-import org.bukkit.craftbukkit.v1_20_R3.entity.CraftBlockDisplay;
-import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer;
+import org.bukkit.craftbukkit.entity.CraftBlockDisplay;
+import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.BoundingBox;
 

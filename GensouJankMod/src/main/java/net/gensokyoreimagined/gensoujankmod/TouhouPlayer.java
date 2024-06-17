@@ -7,7 +7,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.phys.AABB;
-import org.bukkit.craftbukkit.v1_20_R3.entity.CraftBlockDisplay;
+import org.bukkit.craftbukkit.entity.CraftBlockDisplay;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.BoundingBox;
 import org.jetbrains.annotations.NotNull;
