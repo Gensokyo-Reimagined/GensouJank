@@ -1,7 +1,7 @@
 package net.gensokyoreimagined.gensoujank;
 
-import net.gensokyoreimagined.gensoujankmod.ITouhouPlayer;
 import net.gensokyoreimagined.gensoujankmod.TouhouPlayer;
+import net.gensokyoreimagined.gensoujankmod.TouhouPlayers;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -26,7 +26,7 @@ public class GensouJank extends JavaPlugin implements Listener {
         config.options().copyDefaults(true);
         saveConfig();
 
-        TouhouPlayer.setAdjustY(config.getDouble("hitbox-y-offset"));
+        TouhouPlayers.defaultAdjustY = config.getDouble("hitbox-y-offset");
 
         TouhouHitboxes touhouHitboxes = new TouhouHitboxes();
         TouhouHitboxesTabCompleter touhouHitboxesTabCompleter = new TouhouHitboxesTabCompleter();

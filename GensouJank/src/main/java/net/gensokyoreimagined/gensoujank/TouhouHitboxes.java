@@ -1,59 +1,39 @@
 package net.gensokyoreimagined.gensoujank;
 
 import com.mojang.math.Transformation;
-import net.gensokyoreimagined.gensoujankmod.TouhouPlayer;
-import net.gensokyoreimagined.gensoujankmod.ITouhouPlayer;
+import net.gensokyoreimagined.gensoujankmod.TouhouPlayers;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.entity.CraftBlockDisplay;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
-import java.util.List;
-
 public class TouhouHitboxes implements CommandExecutor, Listener {
-    @EventHandler
-    public void onPlayerLogin(PlayerJoinEvent event) {
-        var player = (CraftPlayer) event.getPlayer();
-
-        if (!(player.getHandle() instanceof ITouhouPlayer)) {
-            Bukkit.getLogger().warning("[GensouJank] Player " + player.getName() + " is not a TouhouPlayer, but " + player.getHandle().getClass());
-        }
-    }
-
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         var player = (CraftPlayer) event.getPlayer();
 
-        if (player.getHandle() instanceof ITouhouPlayer touhouPlayer) {
-            if (touhouPlayer.getDebugTask() != null) {
-                touhouPlayer.getDebugTask().cancel();
-                touhouPlayer.setDebugTask(null);
+        var query = TouhouPlayers.players.get(player.getUniqueId());
+
+        if (query != null) {
+            if (query.debugTask != null) {
+                query.debugTask.cancel();
             }
 
-            if (touhouPlayer.getHitboxDisplay() != null) {
-                touhouPlayer.getHitboxDisplay().remove();
-                touhouPlayer.setHitboxDisplay(null);
+            if (query.hitbox != null) {
+                query.hitbox.remove();
             }
 
-            if (touhouPlayer.isBossMode()) {
-                // Log out and fix collision box
-                touhouPlayer.setBossMode(false);
-            }
-        } else {
-            Bukkit.getLogger().warning("[GensouJank] Player " + player.getName() + " is not a TouhouPlayer, but " + player.getHandle().getClass());
+            TouhouPlayers.players.remove(player.getUniqueId());
         }
     }
 
@@ -85,18 +65,20 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
             return true;
         }
 
-        if(player.getHandle() instanceof ITouhouPlayer touhouPlayer) {
-            touhouPlayer.setBossMode(args[1].equalsIgnoreCase("true"));
+        var query = TouhouPlayers.players.get(player.getUniqueId());
+
+        if (query != null) {
+            query.bossMode = (args[1].equalsIgnoreCase("true"));
 
             if (args.length > 2) {
-                if (args[2].equalsIgnoreCase("true") && touhouPlayer.getDebugTask() == null) {
+                if (args[2].equalsIgnoreCase("true") && query.debugTask == null) {
                     // Debug mode: show hitbox using a block display entity (glass block)
 
                     var world = player.getWorld();
                     var box = player.getBoundingBox();
                     var hitboxLocation = new Location(world, box.getMinX(), box.getMinY(), box.getMinZ());
                     var hitbox = (CraftBlockDisplay) world.spawnEntity(hitboxLocation, EntityType.BLOCK_DISPLAY);
-                    touhouPlayer.setHitboxDisplay(hitbox);
+                    query.hitbox = hitbox;
 
                     hitbox.setVisibleByDefault(false);
                     hitbox.setTeleportDuration(1);
@@ -112,9 +94,9 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
                             null
                     ));
 
-                    var debugTask = Bukkit.getScheduler().runTaskTimer(GensouJank.getInstance(), () -> {
+                    query.debugTask = Bukkit.getScheduler().runTaskTimer(GensouJank.getInstance(), () -> {
                         var timerBox = player.getBoundingBox();
-                        var tHitBox = touhouPlayer.getHitboxDisplay();
+                        var tHitBox = query.hitbox;
 
                         tHitBox.getHandle().setTransformation(new Transformation(
                             null,
@@ -125,31 +107,29 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
 
                         var onGround = player.isOnGround();
                         // compensate for player movement - step one tick ahead
-                        var velocityX = touhouPlayer.getLastBoundingBox() == null ? 0 : timerBox.getMinX() - touhouPlayer.getLastBoundingBox().getMinX();
-                        var velocityY = touhouPlayer.getLastBoundingBox() == null ? 0 : timerBox.getMinY() - touhouPlayer.getLastBoundingBox().getMinY();
-                        var velocityZ = touhouPlayer.getLastBoundingBox() == null ? 0 : timerBox.getMinZ() - touhouPlayer.getLastBoundingBox().getMinZ();
+                        var velocityX = query.lastBoundingBox == null ? 0 : timerBox.getMinX() - query.lastBoundingBox.getMinX();
+                        var velocityY = query.lastBoundingBox == null ? 0 : timerBox.getMinY() - query.lastBoundingBox.getMinY();
+                        var velocityZ = query.lastBoundingBox == null ? 0 : timerBox.getMinZ() - query.lastBoundingBox.getMinZ();
 
-                        touhouPlayer.getHitboxDisplay().teleport(new Location(
-                            touhouPlayer.getBukkitEntity().getWorld(), timerBox.getMinX() + 1 * velocityX, timerBox.getMinY() + (onGround ? 0 : 1 * velocityY), timerBox.getMinZ() + 1 * velocityZ
+                        query.hitbox.teleport(new Location(
+                            player.getWorld(), timerBox.getMinX() + 1 * velocityX, timerBox.getMinY() + (onGround ? 0 : 1 * velocityY), timerBox.getMinZ() + 1 * velocityZ
                         ));
 
-                        touhouPlayer.setLastBoundingBox(timerBox);
+                        query.lastBoundingBox = timerBox;
 
                         // Bukkit.getLogger().info("[GensouJank] " + player.getName() + " position: " + player.getLocation());
                     }, 0L, 1L);
-
-                    touhouPlayer.setDebugTask(debugTask);
-                } else if (args[2].equalsIgnoreCase("false") && touhouPlayer.getDebugTask() != null) {
-                    touhouPlayer.getDebugTask().cancel();
-                    touhouPlayer.setDebugTask(null);
-                    touhouPlayer.getHitboxDisplay().remove();
-                    touhouPlayer.setHitboxDisplay(null);
+                } else if (args[2].equalsIgnoreCase("false") && query.debugTask != null) {
+                    query.debugTask.cancel();
+                    query.debugTask = null;
+                    query.hitbox.remove();
+                    query.hitbox = null;
                 }
             }
 
             if (args.length > 3) {
                 try {
-                    TouhouPlayer.setAdjustY(Double.parseDouble(args[3]));
+                    query.adjustY = Double.parseDouble(args[3]);
                 } catch (NumberFormatException e) {
                     sender.sendMessage(
                         Component
@@ -172,7 +152,14 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
                     .build()
             );
         } else {
-            throw new IllegalStateException("Player is " + player.getHandle().getClass()+ " instead of TouhouPlayer");
+            sender.sendMessage(
+                Component
+                    .text()
+                    .append(Component.text().color(NamedTextColor.RED).content("Player "))
+                    .append(Component.text().color(NamedTextColor.WHITE).content(player.getName()))
+                    .append(Component.text().color(NamedTextColor.RED).content(" not found"))
+                    .build()
+            );
         }
 
         return true;
