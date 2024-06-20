@@ -36,10 +36,12 @@ jobs:
       - name: Build artifacts
         run: ./gradlew clean :build-logic:build GensouJankMod:build GensouJank:build
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: gensoujank-artifacts-${{ steps.ref.outputs.branch }}
-          path: build/libs/*.jar
+          path: |
+            GensouJankMod/build/libs/*.jar
+            GensouJank/build/libs/*.jar
 #      - name: Reposilite upload
 #        run: ./gradlew publish
 #        env:
