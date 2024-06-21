@@ -25,10 +25,6 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
         var query = TouhouPlayers.players.get(player.getUniqueId());
 
         if (query != null) {
-            if (query.debugTask != null) {
-                query.debugTask.cancel();
-            }
-
             if (query.hitbox != null) {
                 query.hitbox.remove();
             }
@@ -71,7 +67,7 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
             query.bossMode = (args[1].equalsIgnoreCase("true"));
 
             if (args.length > 2) {
-                if (args[2].equalsIgnoreCase("true") && query.debugTask == null) {
+                if (args[2].equalsIgnoreCase("true") && query.hitbox == null) {
                     // Debug mode: show hitbox using a block display entity (glass block)
 
                     var world = player.getWorld();
@@ -80,11 +76,11 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
                     var hitbox = (CraftBlockDisplay) world.spawnEntity(hitboxLocation, EntityType.BLOCK_DISPLAY);
                     query.hitbox = hitbox;
 
+                    // Only show hitbox to the player
                     hitbox.setVisibleByDefault(false);
-                    // hitbox.setTeleportDuration(1);
                     player.showEntity(GensouJank.getInstance(), hitbox);
 
-                    // Set hitbox to glass block
+                    // Set hitbox to spawner block
                     hitbox.setBlock(Material.SPAWNER.createBlockData());
 
                     // I do not particularly like Bukkit's API, soooo
@@ -97,23 +93,7 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
 
                     // Make the hitbox follow the player
                     player.addPassenger(hitbox);
-
-                    query.debugTask = Bukkit.getScheduler().runTaskTimer(GensouJank.getInstance(), () -> {
-                        var timerBox = player.getBoundingBox();
-                        var tHitBox = query.hitbox;
-
-                        tHitBox.getHandle().setTransformation(new Transformation(
-                            new Vector3f((float) -player.getWidth() / 2.0f, (float) -timerBox.getHeight(), (float) -player.getWidth() / 2.0f),
-                            null,
-                            new Vector3f((float) timerBox.getWidthX(), (float) timerBox.getHeight(), (float) timerBox.getWidthZ()),
-                            null
-                        ));
-
-                        query.lastBoundingBox = timerBox;
-                    }, 0L, 1L);
-                } else if (args[2].equalsIgnoreCase("false") && query.debugTask != null) {
-                    query.debugTask.cancel();
-                    query.debugTask = null;
+                } else if (args[2].equalsIgnoreCase("false") && query.hitbox != null) {
                     query.hitbox.remove();
                     query.hitbox = null;
                 }
