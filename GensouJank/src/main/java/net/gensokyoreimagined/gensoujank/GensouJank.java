@@ -22,7 +22,7 @@ public class GensouJank extends JavaPlugin implements Listener {
         instance = this;
 
         config.addDefault("hitbox-y-offset", 1.2);
-        // config.addDefault("debug-mode", false);
+
         config.options().copyDefaults(true);
         saveConfig();
 

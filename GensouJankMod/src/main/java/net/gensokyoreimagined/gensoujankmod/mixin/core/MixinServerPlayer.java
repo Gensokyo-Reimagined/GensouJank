@@ -6,7 +6,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.phys.AABB;
-import org.bukkit.Bukkit;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -26,11 +25,10 @@ public class MixinServerPlayer {
             var uuid = player.getUUID();
 
             if (gensouJank$instance == null) {
-                Bukkit.getLogger().info("[GensouJank] Creating new TouhouPlayer instance for " + uuid + "...");
                 gensouJank$instance = TouhouPlayers.players.computeIfAbsent(uuid, o -> new TouhouPlayer(uuid));
                 TouhouPlayers.players.put(uuid, gensouJank$instance);
             } else if (!gensouJank$instance.uuid.equals(uuid)) {
-                Bukkit.getLogger().info("[GensouJank] Updating TouhouPlayer instance " + gensouJank$instance.uuid + " -> " + uuid + "...");
+                // UUID gets changed when the player fully logs in (changes to Minecraft UUID rather than entity UUID)
                 TouhouPlayers.players.remove(gensouJank$instance.uuid);
                 TouhouPlayers.players.put(uuid, gensouJank$instance);
                 gensouJank$instance.uuid = uuid;

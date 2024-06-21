@@ -81,43 +81,35 @@ public class TouhouHitboxes implements CommandExecutor, Listener {
                     query.hitbox = hitbox;
 
                     hitbox.setVisibleByDefault(false);
-                    hitbox.setTeleportDuration(1);
+                    // hitbox.setTeleportDuration(1);
                     player.showEntity(GensouJank.getInstance(), hitbox);
 
-                    hitbox.setBlock(Material.GLASS.createBlockData());
+                    // Set hitbox to glass block
+                    hitbox.setBlock(Material.SPAWNER.createBlockData());
 
                     // I do not particularly like Bukkit's API, soooo
                     hitbox.getHandle().setTransformation(new Transformation(
-                            null,
+                            new Vector3f((float) -player.getWidth() / 2.0f, (float) -box.getHeight(), (float) -player.getWidth() / 2.0f),
                             null,
                             new Vector3f((float) box.getWidthX(), (float) box.getHeight(), (float) box.getWidthZ()),
                             null
                     ));
+
+                    // Make the hitbox follow the player
+                    player.addPassenger(hitbox);
 
                     query.debugTask = Bukkit.getScheduler().runTaskTimer(GensouJank.getInstance(), () -> {
                         var timerBox = player.getBoundingBox();
                         var tHitBox = query.hitbox;
 
                         tHitBox.getHandle().setTransformation(new Transformation(
-                            null,
+                            new Vector3f((float) -player.getWidth() / 2.0f, (float) -timerBox.getHeight(), (float) -player.getWidth() / 2.0f),
                             null,
                             new Vector3f((float) timerBox.getWidthX(), (float) timerBox.getHeight(), (float) timerBox.getWidthZ()),
                             null
                         ));
 
-                        var onGround = player.isOnGround();
-                        // compensate for player movement - step one tick ahead
-                        var velocityX = query.lastBoundingBox == null ? 0 : timerBox.getMinX() - query.lastBoundingBox.getMinX();
-                        var velocityY = query.lastBoundingBox == null ? 0 : timerBox.getMinY() - query.lastBoundingBox.getMinY();
-                        var velocityZ = query.lastBoundingBox == null ? 0 : timerBox.getMinZ() - query.lastBoundingBox.getMinZ();
-
-                        query.hitbox.teleport(new Location(
-                            player.getWorld(), timerBox.getMinX() + 1 * velocityX, timerBox.getMinY() + (onGround ? 0 : 1 * velocityY), timerBox.getMinZ() + 1 * velocityZ
-                        ));
-
                         query.lastBoundingBox = timerBox;
-
-                        // Bukkit.getLogger().info("[GensouJank] " + player.getName() + " position: " + player.getLocation());
                     }, 0L, 1L);
                 } else if (args[2].equalsIgnoreCase("false") && query.debugTask != null) {
                     query.debugTask.cancel();
