@@ -8,7 +8,7 @@ mixin = "0.8.7"
 paperweight = "1.7.7"
 shadow = "8.1.2"
 spotless = "6.23.3"
-paper = "1.21.1-R0.1-SNAPSHOT"
+paper = "1.21.3-R0.1-SNAPSHOT"
 
 [libraries]
 jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains" }
